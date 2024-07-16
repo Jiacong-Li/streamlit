@@ -12,7 +12,7 @@ file_path = "earthquake_2019-2024.xlsx"
 data = pd.read_excel(file_path)
 
 # Plot the Logo
-st.image('RSG.png')
+st.sidebar.image('RSG.png')
 # Header of the Dashboard
 st.title("Earthquake Data Dashboard :bar_chart:")
 st.markdown(
