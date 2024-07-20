@@ -73,7 +73,15 @@ st.dataframe(filtered_data.head())
 st.markdown('----')
 
 #-------Main-------
-# 1. Basic Stats
+# 1.Map of earthquake
+st.subheader("Map of Earthquake Locations")
+map_fig = px.scatter_mapbox(filtered_data, lat='Latitude', lon='Longitude', color='Mag',
+                            hover_name='Area', hover_data=['Date', 'Depth'], color_continuous_scale = ['Orange','Maroon'],
+                            mapbox_style="open-street-map")
+st.plotly_chart(map_fig)
+st.markdown('---')
+
+# 2. Basic Stats
 mag_mean = filtered_data['Mag'].mean().round(2)
 mag_max = filtered_data['Mag'].max()
 mag_min = filtered_data['Mag'].min()
@@ -89,7 +97,7 @@ with col1:
  st.subheader("**Range of Magnitude:**")
  st.markdown(f"**({mag_min} , {mag_max})**")
 with col2:
- st.subheader("**Average Magnitude:**")
+ st.subheader("**Average Depth:**")
  st.markdown(f"**{dep_mean}**")
  st.subheader("**Range of Depth:**")
  st.markdown(f"**({dep_min} , {dep_max})**")
@@ -99,10 +107,26 @@ dis_date = filtered_data[filtered_data['Mag']==mag_max]['Date'].dt.date.to_list(
 max_loc = filtered_data[(filtered_data['Date']==max_date) & (filtered_data['Mag'] == mag_max)]['Area'].unique()
 max_loc_str = ', '.join(max_loc)
 
-st.write(f":mag: The highest magnitude earthquake happened on &nbsp; **{dis_date}**  &nbsp; at &nbsp; **{max_loc_str}**.")
+st.write(f'<span style="color:steelblue">:mag: The highest magnitude earthquake happened on &nbsp; <b>{dis_date}</b> &nbsp; at &nbsp; <b>{max_loc_str}</b>.</span>', unsafe_allow_html=True)
+
 st.markdown('---')
 
-# 2. Distribution of Mag and Dep
+# 2. Number of earthquake per month
+st.subheader("Number of Earthquakes per Month")
+filtered_data['month_date'] = filtered_data['Date'].dt.strftime('%Y-%m')
+date_count = filtered_data.groupby(by='month_date',as_index=False).count()[['month_date','Mag']]
+
+date_count_fig = px.line(data_frame=date_count,x='month_date',y='Mag',template='seaborn')
+
+date_count_fig.update_layout(
+ xaxis_title='Date<br>(Year-Month)',
+ yaxis_title='Number of Earthquakes'
+)
+
+st.plotly_chart(date_count_fig)
+st.markdown('---')
+
+# 3. Distribution of Mag and Dep
 st.subheader('Distribution of Earthquake Magnitude & Depth')
 col1, col2 = st.columns(2)
 
@@ -125,7 +149,7 @@ with col2:
 
 st.markdown('---')
 
-# 3. Top 15 Area with most earthquake
+# 4. Top 15 Area with most earthquake
 st.subheader("Top 15 Areas by Earthquake Frequency")
 mag_count_list = filtered_data.groupby(by=['Area'],dropna=True,as_index=False).count()[['Area','Mag']].sort_values(by='Mag',ascending=False).iloc[0:14]
 mag_count_list.sort_values(by='Mag',ascending=True,inplace=True)
@@ -139,11 +163,12 @@ top_area_fig.update_layout(
 st.plotly_chart(top_area_fig)
 st.markdown("---")
 
-# 4.Pie Chart -- Show percentage of differenct type
+# 5.Pie Chart -- Show percentage of differenct type
 st.subheader("Proportion of Earthquake Magnitude Types")
 magtype_list = filtered_data.groupby(by=['Magtype'],dropna=True,as_index=False).count()[['Magtype','Mag']].sort_values(by='Mag',ascending=False)
 magtype_pie_fig = px.pie(magtype_list, values='Mag', names='Magtype')
 st.plotly_chart(magtype_pie_fig)
+
 
 
 #-------END------
@@ -169,7 +194,9 @@ column_definitions = {
     "The total number of seismic stations used to calculate the magnitude for this earthquake.",
     "Indicates whether the event has been reviewed by a human.",
     "The network that originally authored the reported location of this event.",
-    "Network that originally authored the reported magnitude for this event."
+    "Network that originally authored the reported magnitude for this event.",
+    "Latitude",
+    "Longitude"
     ]
 }
 
@@ -195,4 +222,3 @@ columns_def_html = columns_def.to_html(index=False)
 # Display the definitions table at the end of the dashboard with custom styling
 st.write("Column Definition")
 st.markdown(f'<div class="small-text">{columns_def_html}</div>', unsafe_allow_html=True)
-
